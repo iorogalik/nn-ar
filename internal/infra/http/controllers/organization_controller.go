@@ -23,26 +23,22 @@ func NewOrganizationController(os app.OrganizationService) OrganizationControlle
 func (c OrganizationController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(UserKey).(domain.User)
-
-		user, err := requests.Bind(r, requests.UpdateUserRequest{}, domain.User{})
+		org, err := requests.Bind(r, requests.OrganizationRequest{}, domain.Organization{})
 		if err != nil {
 			log.Printf("UserController: %s", err)
 			BadRequest(w, err)
 			return
 		}
 
-		u := r.Context().Value(UserKey).(domain.User)
-		u.FirstName = user.FirstName
-		u.SecondName = user.SecondName
-		u.Email = user.Email
-		user, err = c.userService.Update(u)
+		org.UserId = user.Id
+		org, err = c.organizationService.Save(org)
 		if err != nil {
 			log.Printf("UserController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
-		var userDto resources.UserDto
-		Success(w, userDto.DomainToDto(user))
+		var orgDto resources.OrgDto
+		Success(w, orgDto.DomainToDto(org))
 	}
 }
