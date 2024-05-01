@@ -3,15 +3,16 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/BohdanBoriak/boilerplate-go-back/config"
 	"github.com/BohdanBoriak/boilerplate-go-back/config/container"
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/infra/http/controllers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -96,6 +97,15 @@ func UserRouter(r chi.Router, uc controllers.UserController) {
 		apiRouter.Delete(
 			"/",
 			uc.Delete(),
+		)
+	})
+}
+
+func OrganizationRouter(r chi.Router, oc controllers.OrganizationController) {
+	r.Route("/organizations", func(apiRouter chi.Router) {
+		apiRouter.Post(
+			"/",
+			oc.Save(),
 		)
 	})
 }

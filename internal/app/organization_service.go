@@ -8,6 +8,7 @@ import (
 )
 
 type OrganizationService interface {
+	Save(o domain.Organization) (domain.Organization, error)
 }
 
 type organizationService struct {
