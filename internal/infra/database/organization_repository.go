@@ -26,6 +26,8 @@ type organization struct {
 type OrganizationRepository interface {
 	Save(o domain.Organization) (domain.Organization, error)
 	FindForUser(uId uint64) ([]domain.Organization, error)
+	FindById(id uint64) (domain.Organization, error)
+	Update(o domain.Organization) (domain.Organization, error)
 }
 
 type organizationRepository struct {
@@ -59,6 +61,27 @@ func (r organizationRepository) FindForUser(uId uint64) ([]domain.Organization, 
 	}
 	res := r.mapModelToDomainCollection(orgs)
 	return res, nil
+}
+
+func (r organizationRepository) FindById(id uint64) (domain.Organization, error) {
+	var org organization
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&org)
+	if err != nil {
+		return domain.Organization{}, err
+	}
+	o := r.mapModelToDomain(org)
+	return o, nil
+}
+
+func (r organizationRepository) Update(o domain.Organization) (domain.Organization, error) {
+	org := r.mapDomainToModel(o)
+	org.UpdatedDate = time.Now()
+	err := r.coll.Find(db.Cond{"id": org.Id, "deleted_date": nil}).Update(&org)
+	if err != nil {
+		return domain.Organization{}, err
+	}
+	o = r.mapModelToDomain(org)
+	return o, nil
 }
 
 func (r organizationRepository) mapDomainToModel(d domain.Organization) organization {

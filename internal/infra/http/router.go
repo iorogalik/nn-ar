@@ -10,7 +10,9 @@ import (
 
 	"github.com/BohdanBoriak/boilerplate-go-back/config"
 	"github.com/BohdanBoriak/boilerplate-go-back/config/container"
+	"github.com/BohdanBoriak/boilerplate-go-back/internal/app"
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/infra/http/controllers"
+	"github.com/BohdanBoriak/boilerplate-go-back/internal/infra/http/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 
@@ -50,7 +52,7 @@ func Router(cont container.Container) http.Handler {
 				apiRouter.Use(cont.AuthMw)
 
 				UserRouter(apiRouter, cont.UserController)
-				OrganizationRouter(apiRouter, cont.OrganizationController)
+				OrganizationRouter(apiRouter, cont.OrganizationController, cont.OrganizationService)
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
 		})
@@ -102,7 +104,8 @@ func UserRouter(r chi.Router, uc controllers.UserController) {
 	})
 }
 
-func OrganizationRouter(r chi.Router, oc controllers.OrganizationController) {
+func OrganizationRouter(r chi.Router, oc controllers.OrganizationController, os app.OrganizationService) {
+	opom := middlewares.PathObject("orgId", controllers.OrgKey, os)
 	r.Route("/organizations", func(apiRouter chi.Router) {
 		apiRouter.Post(
 			"/",
@@ -111,6 +114,14 @@ func OrganizationRouter(r chi.Router, oc controllers.OrganizationController) {
 		apiRouter.Get(
 			"/",
 			oc.FindForUser(),
+		)
+		apiRouter.With(opom).Get(
+			"/{orgId}",
+			oc.Find(),
+		)
+		apiRouter.With(opom).Put(
+			"/{orgId}",
+			oc.Update(),
 		)
 	})
 }

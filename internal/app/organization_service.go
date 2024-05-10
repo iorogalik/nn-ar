@@ -10,6 +10,8 @@ import (
 type OrganizationService interface {
 	Save(o domain.Organization) (domain.Organization, error)
 	FindForUser(uId uint64) ([]domain.Organization, error)
+	Find(id uint64) (interface{}, error)
+	Update(o domain.Organization) (domain.Organization, error)
 }
 
 type organizationService struct {
@@ -40,4 +42,24 @@ func (s organizationService) FindForUser(uId uint64) ([]domain.Organization, err
 	}
 
 	return orgs, nil
+}
+
+func (s organizationService) Find(id uint64) (interface{}, error) {
+	org, err := s.organizationRepo.FindById(id)
+	if err != nil {
+		log.Printf("OrganizationService: %s", err)
+		return nil, err
+	}
+
+	return org, nil
+}
+
+func (s organizationService) Update(o domain.Organization) (domain.Organization, error) {
+	org, err := s.organizationRepo.Update(o)
+	if err != nil {
+		log.Printf("OrganizationService: %s", err)
+		return domain.Organization{}, err
+	}
+
+	return org, nil
 }

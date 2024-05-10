@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -56,5 +57,55 @@ func (c OrganizationController) FindForUser() http.HandlerFunc {
 		var orgsDto resources.OrgsDto
 		response := orgsDto.DomainToDto(orgs)
 		Success(w, response)
+	}
+}
+
+func (c OrganizationController) Find() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(UserKey).(domain.User)
+		org := r.Context().Value(OrgKey).(domain.Organization)
+
+		if org.UserId != user.Id {
+			err := fmt.Errorf("access denied")
+			Forbidden(w, err)
+			return
+		}
+
+		var orgDto resources.OrgDto
+		Success(w, orgDto.DomainToDto(org))
+	}
+}
+
+func (c OrganizationController) Update() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(UserKey).(domain.User)
+		org, err := requests.Bind(r, requests.OrganizationRequest{}, domain.Organization{})
+		if err != nil {
+			log.Printf("OrganizationController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
+		organization := r.Context().Value(OrgKey).(domain.Organization)
+		if organization.UserId != user.Id {
+			err := fmt.Errorf("access denied")
+			Forbidden(w, err)
+			return
+		}
+
+		organization.Name = org.Name
+		organization.Address = org.Address
+		organization.City = org.City
+		organization.Lat = org.Lat
+		organization.Lon = org.Lon
+		organization, err = c.organizationService.Update(organization)
+		if err != nil {
+			log.Printf("OrganizationController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		var orgDto resources.OrgDto
+		Success(w, orgDto.DomainToDto(organization))
 	}
 }
