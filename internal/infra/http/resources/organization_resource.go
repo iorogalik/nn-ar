@@ -6,6 +6,10 @@ import (
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
 )
 
+type OrgsDto struct {
+	Organizations []OrgDto `json:"organizations"`
+}
+
 type OrgDto struct {
 	Id          uint64    `json:"id"`
 	UserId      uint64    `json:"userId"`
@@ -32,4 +36,17 @@ func (d OrgDto) DomainToDto(o domain.Organization) OrgDto {
 		CreatedDate: o.CreatedDate,
 		UpdatedDate: o.UpdatedDate,
 	}
+}
+
+func (d OrgsDto) DomainToDto(orgs []domain.Organization) OrgsDto {
+	var organizations []OrgDto
+	for _, o := range orgs {
+		var oDto OrgDto
+		org := oDto.DomainToDto(o)
+		organizations = append(organizations, org)
+	}
+	response := OrgsDto{
+		Organizations: organizations,
+	}
+	return response
 }

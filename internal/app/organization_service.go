@@ -9,6 +9,7 @@ import (
 
 type OrganizationService interface {
 	Save(o domain.Organization) (domain.Organization, error)
+	FindForUser(uId uint64) ([]domain.Organization, error)
 }
 
 type organizationService struct {
@@ -29,4 +30,14 @@ func (s organizationService) Save(o domain.Organization) (domain.Organization, e
 	}
 
 	return o, nil
+}
+
+func (s organizationService) FindForUser(uId uint64) ([]domain.Organization, error) {
+	orgs, err := s.organizationRepo.FindForUser(uId)
+	if err != nil {
+		log.Printf("OrganizationService: %s", err)
+		return nil, err
+	}
+
+	return orgs, nil
 }

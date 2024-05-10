@@ -25,7 +25,7 @@ func (c OrganizationController) Save() http.HandlerFunc {
 		user := r.Context().Value(UserKey).(domain.User)
 		org, err := requests.Bind(r, requests.OrganizationRequest{}, domain.Organization{})
 		if err != nil {
-			log.Printf("UserController: %s", err)
+			log.Printf("OrganizationController: %s", err)
 			BadRequest(w, err)
 			return
 		}
@@ -33,12 +33,28 @@ func (c OrganizationController) Save() http.HandlerFunc {
 		org.UserId = user.Id
 		org, err = c.organizationService.Save(org)
 		if err != nil {
-			log.Printf("UserController: %s", err)
+			log.Printf("OrganizationController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
 		var orgDto resources.OrgDto
-		Success(w, orgDto.DomainToDto(org))
+		Created(w, orgDto.DomainToDto(org))
+	}
+}
+
+func (c OrganizationController) FindForUser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(UserKey).(domain.User)
+		orgs, err := c.organizationService.FindForUser(user.Id)
+		if err != nil {
+			log.Printf("OrganizationController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		var orgsDto resources.OrgsDto
+		response := orgsDto.DomainToDto(orgs)
+		Success(w, response)
 	}
 }

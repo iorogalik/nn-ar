@@ -50,6 +50,7 @@ func Router(cont container.Container) http.Handler {
 				apiRouter.Use(cont.AuthMw)
 
 				UserRouter(apiRouter, cont.UserController)
+				OrganizationRouter(apiRouter, cont.OrganizationController)
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
 		})
@@ -106,6 +107,10 @@ func OrganizationRouter(r chi.Router, oc controllers.OrganizationController) {
 		apiRouter.Post(
 			"/",
 			oc.Save(),
+		)
+		apiRouter.Get(
+			"/",
+			oc.FindForUser(),
 		)
 	})
 }

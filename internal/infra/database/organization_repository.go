@@ -10,7 +10,7 @@ import (
 const OrganizationsTableName = "organizations"
 
 type organization struct {
-	Id          uint64     `db:"id"`
+	Id          uint64     `db:"id,omitempty"`
 	UserId      uint64     `db:"user_id"`
 	Name        string     `db:"name"`
 	Description string     `db:"description"`
@@ -25,6 +25,7 @@ type organization struct {
 
 type OrganizationRepository interface {
 	Save(o domain.Organization) (domain.Organization, error)
+	FindForUser(uId uint64) ([]domain.Organization, error)
 }
 
 type organizationRepository struct {
@@ -41,12 +42,23 @@ func NewOrganizationRepository(dbSession db.Session) OrganizationRepository {
 
 func (r organizationRepository) Save(o domain.Organization) (domain.Organization, error) {
 	org := r.mapDomainToModel(o)
+	org.CreatedDate, org.UpdatedDate = time.Now(), time.Now()
 	err := r.coll.InsertReturning(&org)
 	if err != nil {
 		return domain.Organization{}, err
 	}
 	o = r.mapModelToDomain(org)
 	return o, nil
+}
+
+func (r organizationRepository) FindForUser(uId uint64) ([]domain.Organization, error) {
+	var orgs []organization
+	err := r.coll.Find(db.Cond{"user_id": uId, "deleted_date": nil}).All(&orgs)
+	if err != nil {
+		return nil, err
+	}
+	res := r.mapModelToDomainCollection(orgs)
+	return res, nil
 }
 
 func (r organizationRepository) mapDomainToModel(d domain.Organization) organization {
@@ -79,4 +91,13 @@ func (r organizationRepository) mapModelToDomain(d organization) domain.Organiza
 		UpdatedDate: d.UpdatedDate,
 		DeletedDate: d.DeletedDate,
 	}
+}
+
+func (r organizationRepository) mapModelToDomainCollection(orgs []organization) []domain.Organization {
+	var organizations []domain.Organization
+	for _, o := range orgs {
+		org := r.mapModelToDomain(o)
+		organizations = append(organizations, org)
+	}
+	return organizations
 }
