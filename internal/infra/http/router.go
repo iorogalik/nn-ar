@@ -123,6 +123,10 @@ func OrganizationRouter(r chi.Router, oc controllers.OrganizationController, os 
 			"/{orgId}",
 			oc.Update(),
 		)
+		apiRouter.With(opom).Delete(
+			"/{orgId}",
+			oc.Delete(),
+		)
 	})
 }
 
