@@ -12,6 +12,7 @@ type OrganizationService interface {
 	FindForUser(uId uint64) ([]domain.Organization, error)
 	Find(id uint64) (interface{}, error)
 	Update(o domain.Organization) (domain.Organization, error)
+	Delete(id uint64) error
 }
 
 type organizationService struct {
@@ -62,4 +63,14 @@ func (s organizationService) Update(o domain.Organization) (domain.Organization,
 	}
 
 	return org, nil
+}
+
+func (s organizationService) Delete(id uint64) error {
+	err := s.organizationRepo.Delete(id)
+	if err != nil {
+		log.Printf("OrganizationService: %s", err)
+		return err
+	}
+
+	return nil
 }
