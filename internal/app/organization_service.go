@@ -17,11 +17,15 @@ type OrganizationService interface {
 
 type organizationService struct {
 	organizationRepo database.OrganizationRepository
+	roomRepo         database.RoomRepository
 }
 
-func NewOrganizationService(or database.OrganizationRepository) OrganizationService {
+func NewOrganizationService(
+	or database.OrganizationRepository,
+	rr database.RoomRepository) OrganizationService {
 	return organizationService{
 		organizationRepo: or,
+		roomRepo:         rr,
 	}
 }
 
@@ -51,6 +55,8 @@ func (s organizationService) Find(id uint64) (interface{}, error) {
 		log.Printf("OrganizationService: %s", err)
 		return nil, err
 	}
+
+	org.Rooms, err = s.roomRepo.FindForOrganization(org.Id)
 
 	return org, nil
 }
