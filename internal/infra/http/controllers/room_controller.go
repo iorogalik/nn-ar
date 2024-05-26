@@ -23,7 +23,7 @@ func NewRoomController(os app.RoomService) RoomController {
 
 func (c RoomController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		org := r.Context().Value(UserKey).(domain.User)
+		user := r.Context().Value(UserKey).(domain.User)
 		rom, err := requests.Bind(r, requests.RoomRequest{}, domain.Room{})
 		if err != nil {
 			log.Printf("RoomController: %s", err)
@@ -31,11 +31,14 @@ func (c RoomController) Save() http.HandlerFunc {
 			return
 		}
 
-		rom.OrganizationId = org.Id
-		rom, err = c.roomService.Save(rom)
+		rom, err = c.roomService.Save(rom, user.Id)
 		if err != nil {
-			log.Printf("RoomnController: %s", err)
-			InternalServerError(w, err)
+			log.Printf("RoomController: %s", err)
+			if err.Error() == "access denied" {
+				Forbidden(w, err)
+			} else {
+				InternalServerError(w, err)
+			}
 			return
 		}
 

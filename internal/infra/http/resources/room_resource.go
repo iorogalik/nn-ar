@@ -11,20 +11,22 @@ type RomsDto struct {
 }
 
 type RomDto struct {
-	Id          uint64    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description,somitempty"`
-	CreatedDate time.Time `json:"createdDate"`
-	UpdatedDate time.Time `json:"updatedDate"`
+	Id             uint64    `json:"id"`
+	OrganizationId uint64    `json:"organizationId"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description,somitempty"`
+	CreatedDate    time.Time `json:"createdDate"`
+	UpdatedDate    time.Time `json:"updatedDate"`
 }
 
 func (d RomDto) DomainToDto(m domain.Room) RomDto {
 	return RomDto{
-		Id:          m.Id,
-		Name:        m.Name,
-		Description: m.Description,
-		CreatedDate: m.CreatedDate,
-		UpdatedDate: m.UpdatedDate,
+		Id:             m.Id,
+		OrganizationId: m.OrganizationId,
+		Name:           m.Name,
+		Description:    m.Description,
+		CreatedDate:    m.CreatedDate,
+		UpdatedDate:    m.UpdatedDate,
 	}
 }
 

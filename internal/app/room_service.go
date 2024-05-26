@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"log"
 
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
@@ -8,7 +9,7 @@ import (
 )
 
 type RoomService interface {
-	Save(o domain.Room) (domain.Room, error)
+	Save(m domain.Room, uId uint64) (domain.Room, error)
 	FindForOrganization(oId uint64) ([]domain.Room, error)
 	Find(id uint64) (interface{}, error)
 	Update(m domain.Room) (domain.Room, error)
@@ -16,17 +17,31 @@ type RoomService interface {
 }
 
 type roomService struct {
-	roomRepo database.RoomRepository
+	roomRepo               database.RoomRepository
+	organizationRepository database.OrganizationRepository
 }
 
-func NewRoomService(ro database.RoomRepository) RoomService {
+func NewRoomService(ro database.RoomRepository, or database.OrganizationRepository) RoomService {
 	return &roomService{
-		roomRepo: ro,
+		roomRepo:               ro,
+		organizationRepository: or,
 	}
 }
 
-func (s roomService) Save(o domain.Room) (domain.Room, error) {
-	m, err := s.roomRepo.Save(o)
+func (s roomService) Save(m domain.Room, uId uint64) (domain.Room, error) {
+	org, err := s.organizationRepository.FindById(m.OrganizationId)
+	if err != nil {
+		log.Printf("RoomService: %s", err)
+		return domain.Room{}, err
+	}
+
+	if org.UserId != uId {
+		err = errors.New("access denied")
+		log.Panicf("RoomService: %s", err)
+		return domain.Room{}, err
+	}
+
+	m, err = s.roomRepo.Save(m)
 	if err != nil {
 		log.Printf("RoomService: %s", err)
 		return domain.Room{}, err
@@ -36,33 +51,33 @@ func (s roomService) Save(o domain.Room) (domain.Room, error) {
 }
 
 func (s roomService) FindForOrganization(oId uint64) ([]domain.Room, error) {
-	roms, err := s.roomRepo.FindForOrganization(oId)
+	rooms, err := s.roomRepo.FindForOrganization(oId)
 	if err != nil {
 		log.Printf("RoomService: %s", err)
 		return nil, err
 	}
 
-	return roms, nil
+	return rooms, nil
 }
 
 func (s roomService) Find(id uint64) (interface{}, error) {
-	rom, err := s.roomRepo.FindById(id)
+	room, err := s.roomRepo.FindById(id)
 	if err != nil {
 		log.Printf("RoomService: %s", err)
 		return nil, err
 	}
 
-	return rom, nil
+	return room, nil
 }
 
 func (s roomService) Update(m domain.Room) (domain.Room, error) {
-	rom, err := s.roomRepo.Update(m)
+	room, err := s.roomRepo.Update(m)
 	if err != nil {
 		log.Printf("RoomService: %s", err)
 		return domain.Room{}, err
 	}
 
-	return rom, nil
+	return room, nil
 }
 
 func (s roomService) Delete(id uint64) error {

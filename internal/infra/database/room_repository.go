@@ -39,7 +39,7 @@ func NewRoomRepository(dbSession db.Session) RoomRepository {
 	}
 }
 
-func (r *roomRepository) Save(m domain.Room) (domain.Room, error) {
+func (r roomRepository) Save(m domain.Room) (domain.Room, error) {
 	rom := r.mapDomainToModel(m)
 	rom.CreatedDate, rom.UpdatedDate = time.Now(), time.Now()
 	err := r.coll.InsertReturning(&rom)
@@ -50,7 +50,7 @@ func (r *roomRepository) Save(m domain.Room) (domain.Room, error) {
 	return m, nil
 }
 
-func (r *roomRepository) FindForOrganization(oId uint64) ([]domain.Room, error) {
+func (r roomRepository) FindForOrganization(oId uint64) ([]domain.Room, error) {
 	var roms []room
 	err := r.coll.Find(db.Cond{"organization_id": oId, "deleted_date": nil}).All(&roms)
 	if err != nil {
@@ -70,7 +70,7 @@ func (r roomRepository) FindById(id uint64) (domain.Room, error) {
 	return m, nil
 }
 
-func (r *roomRepository) Update(m domain.Room) (domain.Room, error) {
+func (r roomRepository) Update(m domain.Room) (domain.Room, error) {
 	rom := r.mapDomainToModel(m)
 	rom.UpdatedDate = time.Now()
 	err := r.coll.Find(db.Cond{"id": rom.Id, "deleted_date": nil}).Update(&rom)
@@ -81,11 +81,11 @@ func (r *roomRepository) Update(m domain.Room) (domain.Room, error) {
 	return m, nil
 }
 
-func (r *roomRepository) Delete(id uint64) error {
+func (r roomRepository) Delete(id uint64) error {
 	return r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 }
 
-func (r *roomRepository) mapDomainToModel(d domain.Room) room {
+func (r roomRepository) mapDomainToModel(d domain.Room) room {
 	return room{
 		Id:             d.Id,
 		Name:           d.Name,
@@ -97,7 +97,7 @@ func (r *roomRepository) mapDomainToModel(d domain.Room) room {
 	}
 }
 
-func (r *roomRepository) mapModelToDomain(d room) domain.Room {
+func (r roomRepository) mapModelToDomain(d room) domain.Room {
 	return domain.Room{
 		Id:             d.Id,
 		Name:           d.Name,
@@ -109,7 +109,7 @@ func (r *roomRepository) mapModelToDomain(d room) domain.Room {
 	}
 }
 
-func (r *roomRepository) mapModelToDomainCollection(roms []room) []domain.Room {
+func (r roomRepository) mapModelToDomainCollection(roms []room) []domain.Room {
 	var rooms []domain.Room
 	for _, m := range roms {
 		rom := r.mapModelToDomain(m)

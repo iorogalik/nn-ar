@@ -3,13 +3,15 @@ package requests
 import "github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
 
 type RoomRequest struct {
-	Name        string `json:"name" validate:"required"`
-	Description string `json:"description" validate:"required"`
+	OrganizationId uint64 `json:"organizationId"`
+	Name           string `json:"name" validate:"required"`
+	Description    string `json:"description"`
 }
 
 func (r RoomRequest) ToDomainModel() (interface{}, error) {
-	return domain.Organization{
-		Name:        r.Name,
-		Description: r.Description,
+	return domain.Room{
+		OrganizationId: r.OrganizationId,
+		Name:           r.Name,
+		Description:    r.Description,
 	}, nil
 }
