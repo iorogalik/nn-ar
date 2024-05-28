@@ -1,9 +1,11 @@
 package database
 
 import (
+	"errors"
 	"time"
 
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
+	"github.com/google/uuid"
 	"github.com/upper/db/v4"
 )
 
@@ -19,14 +21,14 @@ const (
 type device struct {
 	Id               uint64         `db:"id,omitempty"`
 	OrganizationId   uint64         `db:"organization_id"`
-	RoomId           uint64         `db:"room_id"`
-	GUID             string         `db:"guid"`
+	RoomId           *uint64        `db:"room_id,omitempty"`
+	GUID             uuid.UUID      `db:"guid"`
 	InventoryNumber  string         `db:"inventory_number"`
 	SerialNumber     string         `db:"serial_number"`
 	Characteristics  string         `db:"characteristics"`
 	Category         DeviceCategory `db:"device_category"`
-	Units            string         `db:"units"`
-	PowerConsumption float64        `db:"power_consumption"`
+	Units            *string        `db:"units,omitempty"`
+	PowerConsumption *float64       `db:"power_consumption,omitempty"`
 	CreatedDate      time.Time      `db:"created_date"`
 	UpdatedDate      time.Time      `db:"updated_date"`
 	DeletedDate      *time.Time     `db:"deleted_date"`
@@ -37,6 +39,8 @@ type DeviceRepository interface {
 	Update(dv domain.Device) (domain.Device, error)
 	FindForRoom(mId uint64) ([]domain.Device, error)
 	FindById(id uint64) (domain.Device, error)
+	SetDeviceToRoom(deviceId, roomId uint64) error
+	RemoveDeviceFromRoom(deviceId uint64) error
 	Delete(id uint64) error
 }
 
@@ -53,8 +57,11 @@ func NewDeviceRepository(dbSession db.Session) DeviceRepository {
 }
 
 func (r deviceRepository) Save(dv domain.Device) (domain.Device, error) {
-	dev := r.mapDomainToModel(dv)
+	if err := validateDevice(dv); err != nil {
+		return domain.Device{}, err
+	}
 	dv.CreatedDate, dv.UpdatedDate = time.Now(), time.Now()
+	dev := r.mapDomainToModel(dv)
 	err := r.coll.InsertReturning(&dv)
 	if err != nil {
 		return domain.Device{}, err
@@ -64,6 +71,9 @@ func (r deviceRepository) Save(dv domain.Device) (domain.Device, error) {
 }
 
 func (r deviceRepository) Update(dv domain.Device) (domain.Device, error) {
+	if err := validateDevice(dv); err != nil {
+		return domain.Device{}, err
+	}
 	dev := r.mapDomainToModel(dv)
 	dev.UpdatedDate = time.Now()
 	err := r.coll.Find(db.Cond{"id": dev.Id, "deleted_date": nil}).Update(&dev)
@@ -92,6 +102,14 @@ func (r deviceRepository) FindById(id uint64) (domain.Device, error) {
 	}
 	dv := r.mapModelToDomain(dev)
 	return dv, nil
+}
+
+func (r deviceRepository) SetDeviceToRoom(deviceId, roomId uint64) error {
+	return r.coll.Find(db.Cond{"id": deviceId, "deleted_date": nil}).Update(map[string]interface{}{"room_id": roomId})
+}
+
+func (r deviceRepository) RemoveDeviceFromRoom(deviceId uint64) error {
+	return r.coll.Find(db.Cond{"id": deviceId, "deleted_date": nil}).Update(map[string]interface{}{"room_id": nil})
 }
 
 func (r deviceRepository) Delete(id uint64) error {
@@ -141,4 +159,14 @@ func (r deviceRepository) mapModelToDomainCollection(devs []device) []domain.Dev
 		devices = append(devices, dev)
 	}
 	return devices
+}
+
+func validateDevice(dv domain.Device) error {
+	if dv.Category == "ACTUATOR" && dv.PowerConsumption == nil {
+		return errors.New("PowerConsumption is required for ACTUATOR")
+	}
+	if dv.Category == "SENSOR" && dv.Units == nil {
+		return errors.New("Units is required for SENSOR")
+	}
+	return nil
 }

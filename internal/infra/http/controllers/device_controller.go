@@ -4,25 +4,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/app"
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/infra/http/requests"
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/infra/http/resources"
+	"github.com/gorilla/mux"
 )
 
 type DeviceController struct {
 	deviceService app.DeviceService
 }
 
-func NewDeviceController(os app.DeviceService) DeviceController {
+func NewDeviceController(ds app.DeviceService) DeviceController {
 	return DeviceController{
-		deviceService: os,
+		deviceService: ds,
 	}
 }
 
 func (c DeviceController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(UserKey).(domain.User)
 		dev, err := requests.Bind(r, requests.DeviceRequest{}, domain.Device{})
 		if err != nil {
 			log.Printf("DeviceController: %s", err)
@@ -30,7 +33,7 @@ func (c DeviceController) Save() http.HandlerFunc {
 			return
 		}
 
-		dev, err = c.deviceService.Save(dev)
+		dev, err = c.deviceService.Save(dev, user.Id)
 		if err != nil {
 			log.Printf("DeviceController: %s", err)
 			if err.Error() == "access denied" {
@@ -48,7 +51,7 @@ func (c DeviceController) Save() http.HandlerFunc {
 
 func (c DeviceController) FindForRoom() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dev := r.Context().Value(DeviceKey).(domain.Device)
+		dev := r.Context().Value(UserKey).(domain.User)
 		devs, err := c.deviceService.FindForRoom(dev.Id)
 		if err != nil {
 			log.Printf("DeviceController: %s", err)
@@ -62,12 +65,12 @@ func (c DeviceController) FindForRoom() http.HandlerFunc {
 	}
 }
 
-func (c DeviceController) Find() http.HandlerFunc {
+func (c DeviceController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dev := r.Context().Value(DeviceKey).(domain.Device)
 		rom := r.Context().Value(RoomKey).(domain.Room)
+		dev := r.Context().Value(DeviceKey).(domain.Device)
 
-		if dev.RoomId != rom.Id {
+		if dev.RoomId != &rom.Id {
 			err := fmt.Errorf("access denied")
 			Forbidden(w, err)
 			return
@@ -80,7 +83,7 @@ func (c DeviceController) Find() http.HandlerFunc {
 
 func (c DeviceController) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rom := r.Context().Value(RoomKey).(domain.Room)
+		rom := r.Context().Value(UserKey).(domain.Room)
 		dev, err := requests.Bind(r, requests.DeviceRequest{}, domain.Device{})
 		if err != nil {
 			log.Printf("DeviceController: %s", err)
@@ -89,7 +92,7 @@ func (c DeviceController) Update() http.HandlerFunc {
 		}
 
 		device := r.Context().Value(DeviceKey).(domain.Device)
-		if dev.RoomId != rom.Id {
+		if device.RoomId != &rom.Id {
 			err := fmt.Errorf("access denied")
 			Forbidden(w, err)
 			return
@@ -102,7 +105,7 @@ func (c DeviceController) Update() http.HandlerFunc {
 		device.Category = dev.Category
 		device.Units = dev.Units
 		device.PowerConsumption = dev.PowerConsumption
-		device, err = c.deviceService.Update(device)
+
 		if err != nil {
 			log.Printf("DeviceController: %s", err)
 			InternalServerError(w, err)
@@ -114,12 +117,58 @@ func (c DeviceController) Update() http.HandlerFunc {
 	}
 }
 
+func (c DeviceController) SetDeviceToRoom() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		deviceId, err := strconv.ParseUint(vars["deviceId"], 10, 64)
+		if err != nil {
+			BadRequest(w, err)
+			return
+		}
+
+		var req requests.SetRoomRequest
+		if err := requests.Bind(r, &req); err != nil {
+			BadRequest(w, err)
+			return
+		}
+
+		err = c.deviceService.SetDeviceToRoom(deviceId, req.RoomId)
+		if err != nil {
+			log.Printf("DeviceController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Ok(w)
+	}
+}
+
+func (c DeviceController) RemoveDeviceFromRoom() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		deviceId, err := strconv.ParseUint(vars["deviceId"], 10, 64)
+		if err != nil {
+			BadRequest(w, err)
+			return
+		}
+
+		err = c.deviceService.RemoveDeviceFromRoom(deviceId)
+		if err != nil {
+			log.Printf("DeviceController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Ok(w)
+	}
+}
+
 func (c DeviceController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dev := r.Context().Value(DeviceKey).(domain.Device)
 		rom := r.Context().Value(RoomKey).(domain.Room)
+		dev := r.Context().Value(DeviceKey).(domain.Device)
 
-		if dev.RoomId != rom.Id {
+		if dev.RoomId != &rom.Id {
 			err := fmt.Errorf("access denied")
 			Forbidden(w, err)
 			return

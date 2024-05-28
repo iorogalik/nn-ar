@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"log"
 
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
@@ -8,25 +9,41 @@ import (
 )
 
 type DeviceService interface {
-	Save(dv domain.Device) (domain.Device, error)
+	Save(dv domain.Device, uId uint64) (domain.Device, error)
 	FindForRoom(mId uint64) ([]domain.Device, error)
 	Find(id uint64) (interface{}, error)
-	Update(d domain.Device) (domain.Device, error)
+	Update(dv domain.Device) (domain.Device, error)
+	SetDeviceToRoom(deviceId, roomId uint64) error
+	RemoveDeviceFromRoom(deviceId uint64) error
 	Delete(id uint64) error
 }
 
 type deviceService struct {
 	deviceRepo database.DeviceRepository
+	roomRepo   database.RoomRepository
 }
 
-func NewDeviceService(de database.DeviceRepository) DeviceService {
+func NewDeviceService(de database.DeviceRepository, ro database.RoomRepository) DeviceService {
 	return &deviceService{
 		deviceRepo: de,
+		roomRepo:   ro,
 	}
 }
 
-func (s deviceService) Save(dv domain.Device) (domain.Device, error) {
-	dv, err := s.deviceRepo.Save(dv)
+func (s deviceService) Save(dv domain.Device, uId uint64) (domain.Device, error) {
+	rom, err := s.roomRepo.FindById(dv.RoomId)
+	if err != nil {
+		log.Printf("DeviceService: %s", err)
+		return domain.Device{}, err
+	}
+
+	if rom.UserId != uId {
+		err = errors.New("access denied")
+		log.Panicf("DeviceService: %s", err)
+		return domain.Device{}, err
+	}
+
+	dv, err = s.deviceRepo.Save(dv)
 	if err != nil {
 		log.Printf("DeviceService: %s", err)
 		return domain.Device{}, err
@@ -63,6 +80,26 @@ func (s deviceService) Update(dv domain.Device) (domain.Device, error) {
 	}
 
 	return device, nil
+}
+
+func (s deviceService) SetDeviceToRoom(deviceId, roomId uint64) error {
+	err := s.deviceRepo.SetDeviceToRoom(deviceId, roomId)
+	if err != nil {
+		log.Printf("DeviceService: %s", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s deviceService) RemoveDeviceFromRoom(deviceId uint64) error {
+	err := s.deviceRepo.RemoveDeviceFromRoom(deviceId)
+	if err != nil {
+		log.Printf("DeviceService: %s", err)
+		return err
+	}
+
+	return nil
 }
 
 func (s deviceService) Delete(id uint64) error {

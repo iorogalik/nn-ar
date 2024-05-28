@@ -8,7 +8,7 @@ require (
 	github.com/go-chi/jwtauth/v5 v5.1.0
 	github.com/go-playground/validator/v10 v10.11.2
 	github.com/golang-migrate/migrate/v4 v4.15.2
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/lestrrat-go/jwx/v2 v2.0.8
 	github.com/upper/db/v4 v4.6.0
 	golang.org/x/crypto v0.5.0
@@ -19,6 +19,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
