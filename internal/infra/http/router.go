@@ -170,7 +170,7 @@ func DeviceRouter(r chi.Router, oc controllers.DeviceController, os app.DeviceSe
 		)
 		apiRouter.With(opom).Get(
 			"/{devId}",
-			oc.Find(),
+			oc.FindById(),
 		)
 		apiRouter.With(opom).Put(
 			"/{devId}",
