@@ -105,7 +105,8 @@ func (c DeviceController) Update() http.HandlerFunc {
 		device.Category = dev.Category
 		device.Units = dev.Units
 		device.PowerConsumption = dev.PowerConsumption
-	if err != nil {
+		device, err = c.deviceService.Update(device)
+		if err != nil {
 			log.Printf("DeviceController: %s", err)
 			InternalServerError(w, err)
 			return
