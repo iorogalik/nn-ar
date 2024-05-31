@@ -45,3 +45,9 @@ func (r DeviceRequest) ToDomainModel() (interface{}, error) {
 type SetRoomRequest struct {
 	RoomId uint64 `json:"room_id"`
 }
+
+func (r SetRoomRequest) ToDomainModel() (interface{}, error) {
+	return domain.Device{
+		RoomId: &r.RoomId,
+	}, nil
+}

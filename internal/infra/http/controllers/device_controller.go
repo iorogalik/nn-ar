@@ -105,8 +105,7 @@ func (c DeviceController) Update() http.HandlerFunc {
 		device.Category = dev.Category
 		device.Units = dev.Units
 		device.PowerConsumption = dev.PowerConsumption
-
-		if err != nil {
+	if err != nil {
 			log.Printf("DeviceController: %s", err)
 			InternalServerError(w, err)
 			return
@@ -127,12 +126,13 @@ func (c DeviceController) SetDeviceToRoom() http.HandlerFunc {
 		}
 
 		var req requests.SetRoomRequest
-		if err := requests.Bind(r, &req); err != nil {
+		dev, err := requests.Bind(r, req, domain.Device{})
+		if err != nil {
 			BadRequest(w, err)
 			return
 		}
 
-		err = c.deviceService.SetDeviceToRoom(deviceId, req.RoomId)
+		err = c.deviceService.SetDeviceToRoom(deviceId, *dev.RoomId)
 		if err != nil {
 			log.Printf("DeviceController: %s", err)
 			InternalServerError(w, err)

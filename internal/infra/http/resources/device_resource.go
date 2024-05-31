@@ -2,6 +2,7 @@ package resources
 
 import (
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
+	"github.com/google/uuid"
 )
 
 type DevsDto struct {
@@ -9,16 +10,16 @@ type DevsDto struct {
 }
 
 type DevDto struct {
-	Id               uint64  `json:"id"`
-	OrganizationId   uint64  `json:"organizationId"`
-	RoomId           uint64  `json:"roomId"`
-	GUID             string  `json:"guid"`
-	InventoryNumber  string  `json:"inventoryNumber"`
-	SerialNumber     string  `json:"serialNumber"`
-	Characteristics  string  `json:"characteristics"`
-	Category         string  `json:"category"`
-	Units            string  `json:"units"`
-	PowerConsumption float64 `json:"powerconsumption"`
+	Id               uint64    `json:"id"`
+	OrganizationId   uint64    `json:"organizationId"`
+	RoomId           *uint64   `json:"roomId"`
+	GUID             uuid.UUID `json:"guid"`
+	InventoryNumber  string    `json:"inventoryNumber"`
+	SerialNumber     string    `json:"serialNumber"`
+	Characteristics  string    `json:"characteristics"`
+	Category         string    `json:"category"`
+	Units            *string   `json:"units"`
+	PowerConsumption *float64  `json:"powerconsumption"`
 }
 
 func (d DevDto) DomainToDto(dv domain.Device) DevDto {

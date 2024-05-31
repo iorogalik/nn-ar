@@ -21,23 +21,38 @@ type DeviceService interface {
 type deviceService struct {
 	deviceRepo database.DeviceRepository
 	roomRepo   database.RoomRepository
+	orgRepo    database.OrganizationRepository
 }
 
-func NewDeviceService(de database.DeviceRepository, ro database.RoomRepository) DeviceService {
+func NewDeviceService(de database.DeviceRepository, ro database.RoomRepository, or database.OrganizationRepository) DeviceService {
 	return &deviceService{
 		deviceRepo: de,
 		roomRepo:   ro,
+		orgRepo:    or,
 	}
 }
 
 func (s deviceService) Save(dv domain.Device, uId uint64) (domain.Device, error) {
-	rom, err := s.roomRepo.FindById(dv.RoomId)
+	var (
+		rom domain.Room
+		org domain.Organization
+		err error
+	)
+	if dv.RoomId != nil {
+		rom, err = s.roomRepo.FindById(*dv.RoomId)
+		if err != nil {
+			log.Printf("DeviceService: %s", err)
+			return domain.Device{}, err
+		}
+	}
+
+	org, err = s.orgRepo.FindById(rom.OrganizationId)
 	if err != nil {
 		log.Printf("DeviceService: %s", err)
 		return domain.Device{}, err
 	}
 
-	if rom.UserId != uId {
+	if org.UserId != uId {
 		err = errors.New("access denied")
 		log.Panicf("DeviceService: %s", err)
 		return domain.Device{}, err
