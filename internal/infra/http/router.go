@@ -53,7 +53,7 @@ func Router(cont container.Container) http.Handler {
 
 				UserRouter(apiRouter, cont.UserController)
 				OrganizationRouter(apiRouter, cont.OrganizationController, cont.OrganizationService)
-				RoomRouter(apiRouter, cont.RoomController, cont.RoomService)
+				RoomRouter(apiRouter, cont.RoomController, cont.RoomService, cont.OrganizationService)
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
 		})
@@ -131,26 +131,27 @@ func OrganizationRouter(r chi.Router, oc controllers.OrganizationController, os 
 	})
 }
 
-func RoomRouter(r chi.Router, oc controllers.RoomController, os app.RoomService) {
-	opom := middlewares.PathObject("romId", controllers.RoomKey, os)
+func RoomRouter(r chi.Router, oc controllers.RoomController, rs app.RoomService, os app.OrganizationService) {
+	ropom := middlewares.PathObject("romId", controllers.RoomKey, rs)
+	opom := middlewares.PathObject("orgId", controllers.OrgKey, os)
 	r.Route("/rooms", func(apiRouter chi.Router) {
 		apiRouter.Post(
 			"/",
 			oc.Save(),
 		)
-		apiRouter.Get(
-			"/",
+		apiRouter.With(opom).Get(
+			"/{orgId}",
 			oc.FindForOrganization(),
 		)
-		apiRouter.With(opom).Get(
+		apiRouter.With(ropom).Get(
 			"/{romId}",
 			oc.Find(),
 		)
-		apiRouter.With(opom).Put(
+		apiRouter.With(ropom).Put(
 			"/{romId}",
 			oc.Update(),
 		)
-		apiRouter.With(opom).Delete(
+		apiRouter.With(ropom).Delete(
 			"/{romId}",
 			oc.Delete(),
 		)
@@ -158,7 +159,7 @@ func RoomRouter(r chi.Router, oc controllers.RoomController, os app.RoomService)
 }
 
 func DeviceRouter(r chi.Router, oc controllers.DeviceController, os app.DeviceService) {
-	opom := middlewares.PathObject("devId", controllers.DeviceKey, os)
+	dopom := middlewares.PathObject("devId", controllers.DeviceKey, os)
 	r.Route("/devices", func(apiRouter chi.Router) {
 		apiRouter.Post(
 			"/",
@@ -168,15 +169,15 @@ func DeviceRouter(r chi.Router, oc controllers.DeviceController, os app.DeviceSe
 			"/",
 			oc.FindForRoom(),
 		)
-		apiRouter.With(opom).Get(
+		apiRouter.With(dopom).Get(
 			"/{devId}",
 			oc.FindById(),
 		)
-		apiRouter.With(opom).Put(
+		apiRouter.With(dopom).Put(
 			"/{devId}",
 			oc.Update(),
 		)
-		apiRouter.With(opom).Delete(
+		apiRouter.With(dopom).Delete(
 			"/{devId}",
 			oc.Delete(),
 		)

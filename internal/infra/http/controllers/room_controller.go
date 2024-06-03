@@ -49,8 +49,8 @@ func (c RoomController) Save() http.HandlerFunc {
 
 func (c RoomController) FindForOrganization() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rom := r.Context().Value(UserKey).(domain.User)
-		roms, err := c.roomService.FindForOrganization(rom.Id)
+		org := r.Context().Value(OrgKey).(domain.Organization)
+		roms, err := c.roomService.FindForOrganization(org.Id)
 		if err != nil {
 			log.Printf("RoomController: %s", err)
 			InternalServerError(w, err)
@@ -96,8 +96,8 @@ func (c RoomController) Update() http.HandlerFunc {
 			return
 		}
 
-		room.Name = rom.Name
 		room.OrganizationId = rom.OrganizationId
+		room.Name = rom.Name
 		room.Description = rom.Description
 		room, err = c.roomService.Update(room)
 		if err != nil {

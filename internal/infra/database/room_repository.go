@@ -12,7 +12,7 @@ const RoomsTableName = "rooms"
 type room struct {
 	Id             uint64     `db:"id,omitempty"`
 	Name           string     `db:"name"`
-	OrganizationId uint64     `db:"organizationId"`
+	OrganizationId uint64     `db:"organization_id"`
 	Description    string     `db:"description"`
 	CreatedDate    time.Time  `db:"created_date"`
 	UpdatedDate    time.Time  `db:"updated_date"`
