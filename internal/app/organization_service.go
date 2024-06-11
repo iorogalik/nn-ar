@@ -57,7 +57,9 @@ func (s organizationService) Find(id uint64) (interface{}, error) {
 	}
 
 	org.Rooms, err = s.roomRepo.FindForOrganization(org.Id)
-
+	if err != nil {
+		log.Printf("OrganizationService: %s", err)
+	}
 	return org, nil
 }
 

@@ -177,6 +177,18 @@ func DeviceRouter(r chi.Router, oc controllers.DeviceController, os app.DeviceSe
 			"/{devId}",
 			oc.Update(),
 		)
+		apiRouter.With(dopom).Put(
+			"/{devId}",
+			oc.SetDeviceToRoom(),
+		)
+		apiRouter.With(dopom).Patch(
+			"/{devId}",
+			oc.RemoveDeviceFromRoom(),
+		)
+		apiRouter.With(dopom).Put(
+			"/{devId}",
+			oc.Update(),
+		)
 		apiRouter.With(dopom).Delete(
 			"/{devId}",
 			oc.Delete(),

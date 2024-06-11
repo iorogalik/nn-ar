@@ -8,6 +8,7 @@ import (
 
 type OrgsDto struct {
 	Organizations []OrgDto `json:"organizations"`
+	Rooms         []RomDto `json:"rooms"`
 }
 
 type OrgDto struct {
